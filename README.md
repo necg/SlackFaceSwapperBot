@@ -4,7 +4,7 @@ A simple bot for slack that swaps all faces on images with other randomly select
 # Building and running
 * Create and add the bot to your slack team and write down its token.
 * Install Visual Studio or Monodevelop.
-* Clone this repository.
+* Clone this repository and add this project to Visual Studio / Monodevelop.
 * Make sure the required NuGet packages are installed (SlackAPI and EmguCV).
 * Set up the config.ini file with your bot token, classifier file and scaling factor.
 * Build and run the program.
