@@ -2,7 +2,6 @@
 using Emgu.CV.Structure;
 using Newtonsoft.Json;
 using SlackAPI;
-using SlackAPI.WebSocketMessages;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -21,12 +20,6 @@ namespace SlackFaceSwapperBot
         {
             public string file_id;
             public string user_id;
-        }
-
-        [RequestPath("reactions.add")]
-        public class ReactionAddedResponse : Response
-        {
-
         }
 
         public class ConfigInfo
@@ -52,11 +45,11 @@ namespace SlackFaceSwapperBot
 
         public void Start()
         {
-            LoadConfig();
             rand = new Random();
+            LoadConfig();
             LoadFaces();
 
-            haarCascade = new CascadeClassifier(config.classifierFile);
+            haarCascade = new CascadeClassifier("Assets/" + config.classifierFile);
 
             client = new SlackSocketClient(config.botToken);
 
@@ -81,12 +74,11 @@ namespace SlackFaceSwapperBot
                 });
 
                 clientReady.Wait();
-
-                client.OnMessageReceived += OnMessageReceived;
+                
                 client.BindCallback<NewFileSharedMessage>(OnNewFileShared);
                 client.GetChannelList(GetChannelsCallback);
 
-                var c = client.Channels.Find(x => x.name.Equals("general")); //we listen and post only on the general channel
+                var c = client.Channels.Find(x => x.name.Equals("random")); //we listen and post only on the random channel
                 myChannels.Add(c);
 
                 stopClient.Wait();
@@ -106,11 +98,6 @@ namespace SlackFaceSwapperBot
             }
         }
 
-        private void OnMessageReceived(NewMessage message)
-        {
-
-        }
-
         private void LoadConfig()
         {
             using (StreamReader r = new StreamReader("config.ini"))
@@ -125,9 +112,9 @@ namespace SlackFaceSwapperBot
         {
             int i = 1;
 
-            while (System.IO.File.Exists("Images/face_" + i + ".png"))
+            while (System.IO.File.Exists("Assets/Images/face_" + i + ".png"))
             {
-                var image = new Bitmap("Images/face_" + i + ".png");
+                var image = new Bitmap("Assets/Images/face_" + i + ".png");
                 var mirroredImage = (Bitmap)image.Clone();
                 mirroredImage.RotateFlip(RotateFlipType.RotateNoneFlipX);
 
@@ -136,22 +123,6 @@ namespace SlackFaceSwapperBot
 
                 i++;
             }
-        }
-
-        private void AddReaction(Action<ReactionAddedResponse> callback, string name = null, string channel = null, string timestamp = null)
-        {
-            List<Tuple<string, string>> parameters = new List<Tuple<string, string>>();
-
-            if (!string.IsNullOrEmpty(name))
-                parameters.Add(new Tuple<string, string>("name", name));
-
-            if (!string.IsNullOrEmpty(channel))
-                parameters.Add(new Tuple<string, string>("channel", channel));
-
-            if (!string.IsNullOrEmpty(timestamp))
-                parameters.Add(new Tuple<string, string>("timestamp", timestamp));
-
-            client.APIRequestWithToken(callback, parameters.ToArray());
         }
 
         private void CheckSocketConnected(object sender, EventArgs ev)
